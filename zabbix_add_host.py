@@ -9,7 +9,7 @@ import sys,argparse
 class zabbix_api: 
         def __init__(self): 
             #self.url = 'http://localhost/api_jsonrpc.php' #修改URL
-            self.url = 'http://xx.xx.xx.xx/zabbix/api_jsonrpc.php'
+            self.url = 'http://zabbix.ops.morefuntek.com/api_jsonrpc.php'
             self.header = {"Content-Type":"application/json"}         
              
              
@@ -18,8 +18,8 @@ class zabbix_api:
                                "jsonrpc": "2.0", 
                                "method": "user.login", 
                                "params": { 
-                                          "user": "admin", #修改用户名
-                                          "password": "zabbix" #修改密码
+                                          "user": "liushuai", #修改用户名
+                                          "password": "liushuai2" #修改密码
                                           }, 
                                "id": 0 
                                }) 
@@ -31,7 +31,7 @@ class zabbix_api:
             try: 
                 result = urllib2.urlopen(request) 
             except URLError as e: 
-                print "\033[041m 用户认证失败，请检查 !\033[0m", e.code 
+                print "Login fail!Please check password!", e.code 
             else: 
                 response = json.loads(result.read()) 
                 result.close() 
@@ -68,15 +68,15 @@ class zabbix_api:
                 response = json.loads(result.read()) 
                 #print response
                 result.close() 
-                print "主机数量: \033[31m%s\033[0m"%(len(response['result']))
+                print "hosts count: %s"%(len(response['result']))
                 for host in response['result']:      
                         status={"0":"OK","1":"Disabled"}
                         available={"0":"Unknown","1":"available","2":"Unavailable"}
                         #print host
                         if len(hostName)==0:
-                                print "HostID : %s\t HostName : %s\t Status :\033[32m%s\033[0m \t Available :\033[31m%s\033[0m"%(host['hostid'],host['name'],status[host['status']],available[host['available']])
+                                print "HostID : %s\t HostName : %s\t Status :%s \t Available :%s"%(host['hostid'],host['name'],status[host['status']],available[host['available']])
                         else:
-                                print "HostID : %s\t HostName : %s\t Status :\033[32m%s\033[0m \t Available :\033[31m%s\033[0m"%(host['hostid'],host['name'],status[host['status']],available[host['available']])
+                                print "HostID : %s\t HostName : %s\t Status :%s \t Available :%s"%(host['hostid'],host['name'],status[host['status']],available[host['available']])
                                 return host['hostid']
 
         def hostgroup_get(self, hostgroupName=''): 
@@ -108,9 +108,9 @@ class zabbix_api:
                 #print response()
                 for group in response['result']:
                         if  len(hostgroupName)==0:
-                                print "hostgroup:  \033[31m%s\033[0m \tgroupid : %s" %(group['name'],group['groupid'])
+                                print "hostgroup:  %s \tgroupid : %s" %(group['name'],group['groupid'])
                         else:
-                                print "hostgroup:  \033[31m%s\033[0m\tgroupid : %s" %(group['name'],group['groupid'])
+                                print "hostgroup:  %s \tgroupid : %s" %(group['name'],group['groupid'])
                                 self.hostgroupID = group['groupid'] 
                                 return group['groupid'] 
 
@@ -143,10 +143,10 @@ class zabbix_api:
                 #print response
                 for template in response['result']:                
                     if len(templateName)==0:
-                        print "template : \033[31m%s\033[0m\t  id : %s" % (template['name'], template['templateid'])
+                        print "template : %s \t  id : %s" % (template['name'], template['templateid'])
                     else:
                         self.templateID = response['result'][0]['templateid'] 
-                        print "Template Name :  \033[31m%s\033[0m "%templateName
+                        print "Template Name :  %s "%templateName
                         return response['result'][0]['templateid']
         def hostgroup_create(self,hostgroupName):
 
@@ -178,55 +178,56 @@ class zabbix_api:
 
 
                      
-        def host_create(self, hostip, hostgroupName, templateName): 
-            if self.host_get(hostip):
-                print "\033[041m该主机已经添加!\033[0m" 
-                sys.exit(1)
+        def host_create(self,hostgroupName, templateName,hostips):
+            for hostip in hostips.split(','):
+                    if self.host_get(hostip):
+                        print "The host is already exist!" 
+                        sys.exit(1)
 
-            group_list=[]
-            template_list=[]
-            for i in hostgroupName.split(','):
-                var = {}
-                var['groupid'] = self.hostgroup_get(i)
-                group_list.append(var)
-            for i in templateName.split(','):
-                var={}
-                var['templateid']=self.template_get(i)
-                template_list.append(var)
+                    group_list=[]
+                    template_list=[]
+                    for i in hostgroupName.split(','):
+                        var = {}
+                        var['groupid'] = self.hostgroup_get(i)
+                        group_list.append(var)
+                    for i in templateName.split(','):
+                        var={}
+                        var['templateid']=self.template_get(i)
+                        template_list.append(var)
 
-            data = json.dumps({ 
-                               "jsonrpc":"2.0", 
-                               "method":"host.create", 
-                               "params":{ 
-                                         "host": hostip, 
-                                         "interfaces": [ 
-                                         { 
-                                         "type": 1, 
-                                         "main": 1, 
-                                         "useip": 1, 
-                                         "ip": hostip, 
-                                         "dns": "", 
-                                         "port": "10050" 
-                                          } 
-                                         ], 
-                                       "groups": group_list,
-                                       "templates": template_list,
-                                         }, 
-                               "auth": self.user_login(), 
-                               "id":1                   
-            }) 
-            request = urllib2.Request(self.url, data) 
-            for key in self.header: 
-                request.add_header(key, self.header[key]) 
-                  
-            try: 
-                result = urllib2.urlopen(request) 
-            except URLError as e: 
-                print "Error as ", e 
-            else: 
-                response = json.loads(result.read()) 
-                result.close() 
-                print "添加主机 : \033[42m%s\031[0m \tid :\033[31m%s\033[0m" % (hostip, response['result']['hostids']) 
+                    data = json.dumps({ 
+                                       "jsonrpc":"2.0", 
+                                       "method":"host.create", 
+                                       "params":{ 
+                                                 "host": hostip, 
+                                                 "interfaces": [ 
+                                                 { 
+                                                 "type": 1, 
+                                                 "main": 1, 
+                                                 "useip": 1, 
+                                                 "ip": hostip, 
+                                                 "dns": "", 
+                                                 "port": "10050" 
+                                                  } 
+                                                 ], 
+                                               "groups": group_list,
+                                               "templates": template_list,
+                                                 }, 
+                                       "auth": self.user_login(), 
+                                       "id":1                   
+                    }) 
+                    request = urllib2.Request(self.url, data) 
+                    for key in self.header: 
+                        request.add_header(key, self.header[key]) 
+                          
+                    try: 
+                        result = urllib2.urlopen(request) 
+                    except URLError as e: 
+                        print "Error as ", e 
+                    else: 
+                        response = json.loads(result.read()) 
+                        result.close() 
+                        print "Add host:%s id:%s" % (hostip, response['result']['hostids']) 
 
 
 
@@ -287,13 +288,13 @@ class zabbix_api:
 if __name__ == "__main__":
         zabbix=zabbix_api()
         parser=argparse.ArgumentParser(description='zabbix  api ',usage='%(prog)s [options]')
-        parser.add_argument('-H','--host',nargs='?',dest='listhost',default='host',help='查询主机')
-        parser.add_argument('-G','--group',nargs='?',dest='listgroup',default='group',help='查询主机组')
-        parser.add_argument('-T','--template',nargs='?',dest='listtemp',default='template',help='查询模板信息')
-        parser.add_argument('-A','--add-group',nargs=1,dest='addgroup',help='添加主机组')
-        parser.add_argument('-C','--add-host',dest='addhost',nargs=3,metavar=('192.168.2.1', 'test01,test02', 'Template01,Template02'),help='添加主机,多个主机组或模板使用分号')
-        parser.add_argument('-d','--disable',dest='disablehost',nargs=1,metavar=('192.168.2.1'),help='禁用主机')
-        parser.add_argument('-D','--delete',dest='deletehost',nargs='+',metavar=('192.168.2.1'),help='删除主机,多个主机之间用分号')
+        parser.add_argument('-H','--host',nargs='?',dest='listhost',default='host',help='list hosts')
+        parser.add_argument('-G','--group',nargs='?',dest='listgroup',default='group',help='list host groups')
+        parser.add_argument('-T','--template',nargs='?',dest='listtemp',default='template',help='list templates')
+        parser.add_argument('-A','--add-group',nargs=1,dest='addgroup',help='add host group')
+        parser.add_argument('-C','--add-host',dest='addhost',nargs=3,metavar=('group01,group02', 'Template01,Template02','host1IP,host2IP'),help='add host,use "," between multiple hosts or templates')
+        parser.add_argument('-d','--disable',dest='disablehost',nargs=1,metavar=('192.168.2.1'),help='disable hosts')
+        parser.add_argument('-D','--delete',dest='deletehost',nargs='+',metavar=('192.168.2.1'),help='delete hosts,use "," between multiple hosts' )
         parser.add_argument('-v','--version', action='version', version='%(prog)s 1.0')
         if len(sys.argv)==1:
                 print parser.print_help()
