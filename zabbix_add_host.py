@@ -215,7 +215,8 @@ class zabbix_api:
                                                  }, 
                                        "auth": self.user_login(), 
                                        "id":1                   
-                    }) 
+                    })
+
                     request = urllib2.Request(self.url, data) 
                     for key in self.header: 
                         request.add_header(key, self.header[key]) 
