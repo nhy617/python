@@ -14,7 +14,7 @@ def connect(method,fanhao):
         print "Can't connect WebServer!"
         sys.exit(1)
     else:
-        return BeautifulSoup(req.text)
+        return BeautifulSoup(req.content)
 
 def make_info(bs4_html):
     #使用BeautifulSoup对html进行清洗，找到所有<td class=name|size|date|action>的内容
@@ -57,7 +57,7 @@ def mkdir(path="D:\\torrentkitty\\"):
     ############################################################
 
 def save_info(info,fanhao):
-    filename=mkdir()+fanhao+'.txt'
+    filename=mkdir()+fanhao.decode('utf-8').encode('GB2312')+'.txt'
     f=open(filename,'w')
     for i,v in enumerate(all_info):
         f.write('文件名： '+v['name']+'\n'+'上传日期： '+v['date']+'\n'+'大小： '+v['size']+'\n'+v['magnet']+'\n\n')
