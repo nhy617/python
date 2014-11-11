@@ -72,7 +72,7 @@ def save_info(info,fanhao):
     f=open(filename,'w')
     for i,v in enumerate(all_info):
         num=i+1
-        f.write('<<<'+str(num)+'>>>\n文件名： '+v['name']+'\n'+'上传日期： '+v['date']+'\n'+'大小： '+v['size']+'\n'+v['magnet']+'\n\n')
+        f.write('<<<'+str(num)+'>>>\n文件名： '+v['name']+'\n'+'上传日期： '+v['date']+'\n'+'大小： '+v['size']+'\n'+v['magnet'].encode('utf-8')+'\n\n')
 ##        print "正在写入第%d个".decode('utf-8').encode('GB2312') %(i+1)
         f.flush()
     f.close()
