@@ -13,6 +13,7 @@ def connect(method,fanhao):
         req=requests.get(s,headers=headers)
     except:
         print "%s" % encode_cmd(("连接网站失败！！请检查网络！！"))
+        os.system('pause')
         sys.exit(1)
         
     if method == search:
@@ -49,7 +50,7 @@ def make_info(bs4_html):
         return all_info_list
     else:
         print "%s" % encode_cmd("未找到信息！请重新输入内容！")
-##        break
+        os.system('pause')
         sys.exit(1)
 
 def mkdir(path="D:\\torrentkitty\\"):
@@ -90,5 +91,4 @@ if __name__=="__main__":
     all_info=make_info(html)
     save_info(all_info,fanhao)
     os.system('pause')
-    
  
